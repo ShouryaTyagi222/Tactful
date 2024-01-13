@@ -1,0 +1,10 @@
+-e 'git+https://github.com/facebookresearch/detectron2.git'
+-e 'git+https://github.com/decile-team/submodlib.git'
+tensorflow==2.9.1
+opencv-python==4.8.0.76
+pandas==1.5.2
+Pillow==10.1.0
+torch==2.0.1
+torchvision==0.15.2
+tqdm==4.66.1
+numpy==1.25.2
