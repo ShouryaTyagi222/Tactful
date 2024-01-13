@@ -36,7 +36,6 @@ cfg = get_cfg()
 cfg.merge_from_file(model_zoo.get_config_file(model_cfg))
 cfg.DATASETS.TRAIN = ("initial_set",)
 cfg.DATASETS.TEST = ('test_set', 'val_set')
-cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR , "model_final.pth"),
 cfg.DATALOADER.NUM_WORKERS = 4
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 15     # for the docvqa data
 cfg.SOLVER.BASE_LR = 0.00025
@@ -48,6 +47,7 @@ cfg.MODEL.RPN.POST_NMS_TOPK_TEST: 2000
 # cfg.TEST.EVAL_PERIOD = 1000
 cfg.OUTPUT_DIR = output_dir
 cfg.TRAINING_NAME = training_name
+cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR , "model_final.pth")
 
 result_val = []
 result_test = []
