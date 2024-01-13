@@ -26,7 +26,7 @@ def main(args):
     # Visualize the predictions
     v = Visualizer(im[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]))
     out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-    cv2.imwrtie('result.jpg',out.get_image()[:, :, ::-1])
+    cv2.imwrite('result.jpg',out.get_image()[:, :, ::-1])
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Infer Tactful", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
