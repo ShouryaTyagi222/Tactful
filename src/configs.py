@@ -3,7 +3,7 @@ from detectron2.config import get_cfg
 from detectron2.data.datasets import register_coco_instances
 import os
 
-from .helper import *
+from helper import *
 
 args = {
     "output_path":'com',

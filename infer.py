@@ -3,8 +3,8 @@ from detectron2.data import MetadataCatalog
 import cv2
 import argparse
 
-from .src.helper import *
-from .src.configs import *
+from src.helper import *
+from src.configs import *
 
 def main(args):
     predictor=create_model(cfg,'test')

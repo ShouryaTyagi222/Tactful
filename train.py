@@ -10,9 +10,9 @@ from detectron2.data.datasets import register_coco_instances
 import sys
 sys.path.append("../")
 
-from .src.tactful_smi import TACTFUL_SMI
-from .src.helper import *
-from .src.configs import *
+from src.tactful_smi import TACTFUL_SMI
+from src.helper import *
+from src.configs import *
 
 def main(arg):
     logger = setup_logger(os.path.join(output_dir, cfg.TRAINING_NAME))
