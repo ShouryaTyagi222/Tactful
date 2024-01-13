@@ -30,16 +30,16 @@ def main(arg):
         model.train()
         logger.info("Initial_set training complete")
 
-        # del model
-        torch.cuda.empty_cache()
+    # del model
+    torch.cuda.empty_cache()
 
-        # evaluate the inital model and get worst performing classcfg.MODEL.WEIGHTS = cfg.OUTPUT_DIR + "/model_final.pth
-        cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR , "model_final.pth")
-        model = create_model(cfg, "test")
-        result = do_evaluate(cfg, model, output_dir)
-        result_val.append(result['val_set'])
-        result_test.append(result['test_set'])
-
+    # evaluate the inital model and get worst performing classcfg.MODEL.WEIGHTS = cfg.OUTPUT_DIR + "/model_final.pth
+    cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR , "model_final.pth")
+    model = create_model(cfg, "test")
+    result = do_evaluate(cfg, model, output_dir)
+    result_val.append(result['val_set'])
+    result_test.append(result['test_set'])
+    
     i = 0
     try:
         while (i < iteration and budget > 0):
@@ -67,7 +67,7 @@ def main(arg):
                     os.remove(os.path.join(model_path, "data.csv"))
                 except:
                     pass
-                model = create_model(cfg, "train")
+                # model = create_model(cfg, "test")
                 crop_images_classwise(
                     model, lake_data_dirs[0], os.path.join(model_path, "lake_images"), proposal_budget=proposal_budget)
 
