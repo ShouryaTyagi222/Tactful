@@ -3,7 +3,7 @@ from detectron2.config import get_cfg
 from detectron2.data.datasets import register_coco_instances
 import os
 
-from helper import *
+from .helper import *
 
 args = {
     "output_path":'com',
@@ -29,12 +29,6 @@ output_dir = os.path.join(model_path, "initial_training")
 
 query_path = '/content/drive/MyDrive/tactful/query_data_img/' + args['category']
 selection_arg = {"class":args['category'], 'eta':1, "model_path":model_path, 'smi_function':args['strategy']}
-
-iteration = args['iterations']
-selection_strag = args['strategy']
-selection_budget = args['budget']
-budget = args['total_budget']
-proposal_budget = args['proposal_budget']
 
 # train a faster_rcnn model on the initial_set, add respective config file path
 model_cfg = "COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"

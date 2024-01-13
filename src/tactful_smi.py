@@ -1,9 +1,9 @@
-from strategy import Strategy
+from .strategy import Strategy
 import numpy as np
 
 
-from DB import Database
-from resnet_feat import ResNetFeat
+from .DB import Database
+from .resnet_feat import ResNetFeat
 
 import torch
 from torch import nn

@@ -7,15 +7,19 @@ from detectron2 import model_zoo
 from detectron2.utils.logger import setup_logger
 from detectron2.data.datasets import register_coco_instances
 
-import sys
-sys.path.append("../")
-
 from src.tactful_smi import TACTFUL_SMI
 from src.helper import *
 from src.configs import *
 
 def main(arg):
     logger = setup_logger(os.path.join(output_dir, cfg.TRAINING_NAME))
+    result_val = []
+    result_test = []
+    iteration = args['iterations']
+    selection_strag = args['strategy']
+    selection_budget = args['budget']
+    budget = args['total_budget']
+    proposal_budget = args['proposal_budget']
 
     # Initial Training
     if arg.initial_train!=None:
@@ -30,8 +34,6 @@ def main(arg):
         torch.cuda.empty_cache()
 
         # evaluate the inital model and get worst performing classcfg.MODEL.WEIGHTS = cfg.OUTPUT_DIR + "/model_final.pth
-        result_val = []
-        result_test = []
         cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR , "model_final.pth")
         model = create_model(cfg, "test")
         result = do_evaluate(cfg, model, output_dir)
@@ -65,6 +67,7 @@ def main(arg):
                     os.remove(os.path.join(model_path, "data.csv"))
                 except:
                     pass
+                model = create_model(cfg, "train")
                 crop_images_classwise(
                     model, lake_data_dirs[0], os.path.join(model_path, "lake_images"), proposal_budget=proposal_budget)
 
