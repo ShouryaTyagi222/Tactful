@@ -5,9 +5,10 @@ import os
 
 from .helper import *
 
+# basic args for tactful 
 args = {
     "output_path":'com',
-    "strategy":'com',      # stratedy to be used for tactful
+    "strategy":'com',      # strategy to be used for tactful
     "total_budget":150,  # Total data points available
     "budget":30,  # Budget per iteration
     "lake_size":150,  # Size of the lake dataset
@@ -18,6 +19,7 @@ args = {
     "iterations":5  # Number of iterations (total_budget / budget)
 }
 
+# mapping required for inference
 MAPPING = {'0': 'Date Block', '1': 'Logos', '2': 'Subject Block', '3': 'Body Block', '4': 'Circular ID', '5': 'Table', '6': 'Stamps/Seals', '7': 'Handwritten Text', '8': 'Copy-Forwarded To Block', '9': 'Address of Issuing Authority', '10': 'Signature', '11': 'Reference Block', '12': 'Signature Block', '13': 'Header Block', '14': 'Addressed To Block'}
 
 train_path = 'model_result'    # path of the output dir
@@ -27,13 +29,18 @@ if (not os.path.exists(model_path)):
     create_dir(model_path)
 output_dir = os.path.join(model_path, "initial_training")
 
-query_path = '/content/drive/MyDrive/tactful/query_data_img/' + args['category']
+# path to the query images dir
+query_path = '/content/drive/MyDrive/tactful/query_data_img/' + args['category']    
+
 selection_arg = {"class":args['category'], 'eta':1, "model_path":model_path, 'smi_function':args['strategy']}
 
 # train a faster_rcnn model on the initial_set, add respective config file path
-model_cfg = "COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"
+# model_cfg = "COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"
+config_path = '/content/drive/MyDrive/tactful/faster_rcnn_pub_config.yml'
+
 cfg = get_cfg()
-cfg.merge_from_file(model_zoo.get_config_file(model_cfg))
+# cfg.merge_from_file(model_zoo.get_config_file(model_cfg))
+cfg.merge_from_file(config_path)   #merge config file of the model
 cfg.DATASETS.TRAIN = ("initial_set",)
 cfg.DATASETS.TEST = ('test_set', 'val_set')
 cfg.DATALOADER.NUM_WORKERS = 4
@@ -47,13 +54,10 @@ cfg.MODEL.RPN.POST_NMS_TOPK_TEST: 2000
 # cfg.TEST.EVAL_PERIOD = 1000
 cfg.OUTPUT_DIR = output_dir
 cfg.TRAINING_NAME = training_name
-cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR , "model_final.pth")
-
-result_val = []
-result_test = []
+cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR , "model_final.pth")   # path to the model saved after initial model train saved in output dir
 
 if torch.cuda.is_available():
-  torch.cuda.set_device(args['device'])
+    torch.cuda.set_device(args['device'])
 
 train_data_dirs = ("/content/drive/MyDrive/tactful/docvqa/train",
                    "/content/drive/MyDrive/tactful/docvqa/docvqa_train_coco.json")

@@ -3,7 +3,6 @@ import pandas as pd
 import torch
 import argparse
 
-from detectron2 import model_zoo
 from detectron2.utils.logger import setup_logger
 from detectron2.data.datasets import register_coco_instances
 
@@ -22,24 +21,20 @@ def main(arg):
     proposal_budget = args['proposal_budget']
 
     # Initial Training
-    if arg.initial_train!=None:
+    if arg.initial_train:
         logger.info("Starting Initial_set Training")
-        cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(model_cfg)
-        model = create_model(cfg)
-        torch.cuda.empty_cache()
-        model.train()
-        logger.info("Initial_set training complete")
+        try:
+            cfg.MODEL.WEIGHTS = arg.init_model_path
+            model = create_model(cfg)
+            torch.cuda.empty_cache()
+            model.train()
+            logger.info("Initial_set training complete")
 
-        # del model
-        torch.cuda.empty_cache()
-
-        # evaluate the inital model and get worst performing classcfg.MODEL.WEIGHTS = cfg.OUTPUT_DIR + "/model_final.pth
-        cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR , "model_final.pth")
-        model = create_model(cfg, "test")
-        result = do_evaluate(cfg, model, output_dir)
-        result_val.append(result['val_set'])
-        result_test.append(result['test_set'])
-    
+            torch.cuda.empty_cache()
+        except Exception as e:
+            logger.info(e)
+            return
+            
     i = 0
     try:
         while (i < iteration and budget > 0):
@@ -57,8 +52,7 @@ def main(arg):
 
                 # Cropping object based on ground truth for the query set.
                 # The set is part of train set, so no need of using object detection model to find the bounding box.
-                print('>>>',query_path)
-                print('>>>',os.path.join(model_path,'query_images'))
+
                 crop_images_classwise_ground_truth(train_data_dirs[1], query_path, os.path.join(
                     model_path, "query_images"), args['category'])
 
@@ -67,6 +61,7 @@ def main(arg):
                     os.remove(os.path.join(model_path, "data.csv"))
                 except:
                     pass
+
                 cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR , "model_final.pth")
                 model = create_model(cfg, "test")
                 crop_images_classwise(
@@ -165,7 +160,8 @@ def main(arg):
 def parse_args():
     parser = argparse.ArgumentParser(description="Tactful", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument("-i", "--initial_train", type=str, default=None, help="If you want initial train then write true else skip")
+    parser.add_argument("-i", "--initial_train", action='store_true', help="To Initialize the model")
+    parser.add_argument("-m", "--init_model_path", default=None, type=str, help="Path to the initial model path only initialize when training for the first time")
     args = parser.parse_args()
     return args
 

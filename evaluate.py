@@ -1,15 +1,14 @@
 import os
-import torch
-
-from detectron2 import model_zoo
-from detectron2.config import get_cfg
 import sys
 sys.path.append("../")
 
-from ..src.helper import *
-from ..src.configs import *
+from src.helper import *
+from src.configs import *
 
 # evaluate the inital model and get worst performing classcfg.MODEL.WEIGHTS = cfg.OUTPUT_DIR + "/model_final.pth
+result_val=[]
+result_test=[]
+
 cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR , "model_final.pth")
 model = create_model(cfg, "test")
 result = do_evaluate(cfg, model, output_dir)
