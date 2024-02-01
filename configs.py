@@ -2,22 +2,23 @@ from detectron2 import model_zoo
 from detectron2.config import get_cfg
 from detectron2.data.datasets import register_coco_instances
 import os
+import torch
 
-from .helper import *
+from .src.helper import *
 
 # basic args for tactful 
 args = {
-    "output_path":'com',
     "strategy":'com',      # strategy to be used for tactful
     "total_budget":150,  # Total data points available
     "budget":30,  # Budget per iteration
     "lake_size":150,  # Size of the lake dataset
     "train_size":42,  # Size of the training dataset
-    "category":'Signature Block',
+    "category":'Signature Block',   # Target Class
     "device":0,
     "proposal_budget":30,  # Budget for proposal generation
-    "iterations":5  # Number of iterations (total_budget / budget)
 }
+args["output_path"] = args['strategy']
+args["iterations"] = int(args['total_budget']/args['proposal_budget'])  # Number of iterations (total_budget / budget)
 
 # mapping required for inference
 MAPPING = {'0': 'Date Block', '1': 'Logos', '2': 'Subject Block', '3': 'Body Block', '4': 'Circular ID', '5': 'Table', '6': 'Stamps/Seals', '7': 'Handwritten Text', '8': 'Copy-Forwarded To Block', '9': 'Address of Issuing Authority', '10': 'Signature', '11': 'Reference Block', '12': 'Signature Block', '13': 'Header Block', '14': 'Addressed To Block'}

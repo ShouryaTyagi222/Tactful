@@ -4,6 +4,7 @@ import numpy as np
 from tqdm import tqdm
 from PIL import Image
 import numpy as np
+from ..configs import *
 
 from detectron2.data import (
     DatasetCatalog,
@@ -98,7 +99,6 @@ def crop_images_classwise(model: DefaultPredictor, src_path, dest_path,
     if not os.path.exists(dest_path + '/obj_images'):
         os.makedirs(dest_path + '/obj_images')
     obj_im_dir = dest_path + '/obj_images'
-    MAPPING = {'0': 'Date Block', '1': 'Logos', '2': 'Subject Block', '3': 'Body Block', '4': 'Circular ID', '5': 'Table', '6': 'Stamps/Seals', '7': 'Handwritten Text', '8': 'Copy-Forwarded To Block', '9': 'Address of Issuing Authority', '10': 'Signature', '11': 'Reference Block', '12': 'Signature Block', '13': 'Header Block', '14': 'Addressed To Block'}
     no_of_objects = 0
     for d in tqdm(os.listdir(src_path)):
         image = cv2.imread(os.path.join(src_path, d))
@@ -155,7 +155,8 @@ def crop_images_classwise_ground_truth(train_json_path, src_path, dest_path,
     obj_im_dir = dest_path + '/obj_images'
 
     # MAPPING = {"text": 1, "title": 2, "list": 3, "table": 4, "figure": 5}
-    MAPPING = {'Date Block': 0, 'Logos': 1, 'Subject Block': 2, 'Body Block': 3, 'Circular ID': 4, 'Table': 5, 'Stamps/Seals': 6, 'Handwritten Text': 7, 'Copy-Forwarded To Block': 8, 'Address of Issuing Authority': 9, 'Signature': 10, 'Reference Block': 11, 'Signature Block': 12, 'Header Block': 13, 'Addressed To Block': 14}
+    MAPPING={vl:int(ky) for ky,vl in MAPPING.items()}
+    # MAPPING = {'Date Block': 0, 'Logos': 1, 'Subject Block': 2, 'Body Block': 3, 'Circular ID': 4, 'Table': 5, 'Stamps/Seals': 6, 'Handwritten Text': 7, 'Copy-Forwarded To Block': 8, 'Address of Issuing Authority': 9, 'Signature': 10, 'Reference Block': 11, 'Signature Block': 12, 'Header Block': 13, 'Addressed To Block': 14}
     no_of_objects = 0
     with open(train_json_path) as f:
         data = json.load(f)
@@ -197,6 +198,60 @@ def Random_wrapper(image_list, budget=10):
 
     return Random_results
 
+def change_dir(image_results, src_dir, dest_dir):
+    for image in image_results:
+        source_img = image
+        destination_img = os.path.join(dest_dir[0], os.path.basename(image))
+        if not os.path.exists(dest_dir[0]) or not os.path.exists(dest_dir[1]):
+            os.mkdir(dest_dir[0])
+            os.mkdir(dest_dir[1])
+
+        try:
+            shutil.copy(source_img, destination_img)
+        except shutil.SameFileError:
+            print("Source and destination represents the same file.")
+
+        # If there is any permission issue
+        except PermissionError:
+            print("Permission denied.")
+
+        # For other errors
+        except Exception as e:
+            print("Error occurred while copying file.", e)
+
+
+        # removing the data from the lake data
+        try:
+            os.remove(source_img)
+        except:
+            pass
+
+def create_labels_update(images, annotations, categories, filename):
+    labels = {}
+    labels['images'] = images
+    labels['annotations'] = annotations
+    labels['categories'] = categories
+
+    with open(filename, "w") as f:
+        json.dump(labels, f)
+
+
+def remove_dir(dir_name):
+    try:
+        shutil.rmtree(dir_name)
+    except:
+        pass
+
+
+def create_dir(dir_name):
+    try:
+        os.mkdir(dir_name)
+    except:
+        pass
+
+def get_original_images_path(subset_result:list,img_dir:str):
+    return [os.path.join(img_dir,"_".join(os.path.basename(x).split("_")[:-1])) for x in subset_result]
+    
 def aug_train_subset(subset_result, train_data_json, lake_data_json, budget, src_dir, dest_dir):
     with open(lake_data_json, mode="r") as f:
         lake_dataset = json.load(f)
@@ -227,57 +282,77 @@ def aug_train_subset(subset_result, train_data_json, lake_data_json, budget, src
     create_labels_update(train_image_list, train_annotations, categories, train_data_json)
     create_labels_update(final_lake_image_list, final_lake_annotations, categories, lake_data_json)
 
-def change_dir(image_results, src_dir, dest_dir):
-    names = [names.split("/")[-1].replace(".jpg", "") for names in image_results]
-    for index in range(len(names)):
-        source_img = os.path.join(src_dir[0], "{}.jpg".format(names[index]))
-        destination_img = os.path.join(dest_dir[0], "{}.jpg".format(names[index]))
-        if not os.path.exists(dest_dir[0]) or not os.path.exists(dest_dir[1]):
-            os.mkdir(dest_dir[0])
-            os.mkdir(dest_dir[1])
+def get_area(bbox):
+  x=int(bbox[2])-int(bbox[0])
+  y=int(bbox[3])-int(bbox[1])
+  area=x*y
+  return int(area)
 
+def get_bounding_boxes(model, image_paths, image_id_mapping, annot_id):
+    bounding_boxes = []
+
+    for image_path in image_paths:
         try:
-            shutil.copy(source_img, destination_img)
-        except shutil.SameFileError:
-            print("Source and destination represents the same file.")
+            print(image_path)
+            image = cv2.imread(image_path)
+            outputs = model(image)
 
-        # If there is any permission issue
-        except PermissionError:
-            print("Permission denied.")
+            # Get the bounding boxes, labels, and scores
+            instances = outputs["instances"]
+            pred_boxes = instances.pred_boxes.tensor.tolist()
+            pred_classes = instances.pred_classes.tolist()
+            scores = instances.scores.tolist()
 
-        # For other errors
+            # Print the predictions
+            for i in range(len(pred_boxes)):
+                # print(f"Bounding box: {pred_boxes[i]}, Label: {MAPPING[str(pred_classes[i])]}, Score: {scores[i]}")
+                annot_id+=1
+                bounding_boxes.append({
+                    'iscrowd': 0,
+                    'image_id': image_id_mapping[image_path],
+                    'bbox': [int(i) for i in pred_boxes[i]],
+                    'segmentation': [],
+                    'category_id': int(pred_classes[i]),
+                    'id': annot_id,
+                    'area': get_area(pred_boxes[i])
+                })
         except Exception as e:
-            print("Error occurred while copying file.", e)
+            print(e)
 
+    return bounding_boxes
 
-        # removing the data from the lake data
-        try:
-            os.remove(os.path.join(src_dir[0], "{}.jpg".format(names[index])))
-        except:
-            pass
+def aug_train_subset_2(subset_result, train_data_json, model, budget, src_dir, dest_dir):
+    print(subset_result)
+    with open(train_data_json, mode="r") as f:
+        train_dataset = json.load(f)
 
-def create_labels_update(images, annotations, categories, filename):
-    labels = {}
-    labels['images'] = images
-    labels['annotations'] = annotations
-    labels['categories'] = categories
+    categories = train_dataset['categories']
+    max_image_id = max([image['id'] for image in train_dataset['images']])
+    annot_id = max([annot['id'] for annot in train_dataset['annotations']])
 
-    with open(filename, "w") as f:
-        json.dump(labels, f)
+    image_id_mapping = {image_name: idx + max_image_id+1 for idx, image_name in enumerate(subset_result)}
 
+    # Update train image list with images from subset_result
+    train_image_list = train_dataset['images'] + [
+        {
+            'id': image_id_mapping[image_path],
+            'file_name': str(os.path.basename(image_path)),
+            'height': int(cv2.imread(image_path).shape[0]),
+            'width': int(cv2.imread(image_path).shape[1]),
+        }
+        for image_path in subset_result
+    ]
+    print('trian_image_list',train_image_list)
 
-def remove_dir(dir_name):
-    try:
-        shutil.rmtree(dir_name)
-    except:
-        pass
+    # Get bounding box information using the model
+    bounding_boxes = get_bounding_boxes(model, subset_result, image_id_mapping, annot_id)
+    print('bounding_boxes :',bounding_boxes)
+    
+    # Update train annotations with bounding box information
+    train_annotations = train_dataset['annotations'] + bounding_boxes
 
+    # Remove the images from the source directory (change_dir function)
+    change_dir(subset_result, src_dir, dest_dir)
 
-def create_dir(dir_name):
-    try:
-        os.mkdir(dir_name)
-    except:
-        pass
-
-def get_original_images_path(subset_result:list):
-    return ["_".join(x.split("/")[-1].split("_")[:2])+ ".jpg" for x in subset_result]
+    # Update the COCO file for train annotations
+    create_labels_update(train_image_list, train_annotations, categories, train_data_json)

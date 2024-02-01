@@ -8,7 +8,7 @@ from detectron2.data.datasets import register_coco_instances
 from detectron2.utils.logger import setup_logger
 
 from ..src.helper import *
-from ..src.configs import *
+from ..configs import *
 
 logger = setup_logger(os.path.join(output_dir, cfg.TRAINING_NAME))
 

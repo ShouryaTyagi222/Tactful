@@ -8,7 +8,7 @@ from detectron2.data.datasets import register_coco_instances
 
 from src.tactful_smi import TACTFUL_SMI
 from src.helper import *
-from src.configs import *
+from configs import *
 
 def main(arg):
     logger = setup_logger(os.path.join(output_dir, cfg.TRAINING_NAME))
@@ -38,7 +38,6 @@ def main(arg):
     i = 0
     try:
         while (i < iteration and budget > 0):
-            # step 3
             # get embeddings for initial and lakeset from RESNET101
 
             if (selection_strag != "random"):
@@ -72,7 +71,7 @@ def main(arg):
                 lake_image_list, subset_result = strategy_sel.select(proposal_budget)
                 subset_result = [lake_image_list[i] for i in subset_result]
                 subset_result = list(
-                    set(get_original_images_path(subset_result)))
+                    set(subset_result))
 
             else:
                 lake_image_list = os.listdir(lake_data_dirs[0])
@@ -84,8 +83,9 @@ def main(arg):
             if (budget > 0):
 
                 # transferring images from lake set to train set
-                aug_train_subset(
-                    subset_result, train_data_dirs[1], lake_data_dirs[1], budget, lake_data_dirs, train_data_dirs)
+                # aug_train_subset(
+                #     subset_result, train_data_dirs[1], lake_data_dirs[1], budget, lake_data_dirs, train_data_dirs)
+                aug_train_subset_2(subset_result, train_data_dirs[1], model, budget, lake_data_dirs, train_data_dirs)
             # removing the old training images from the detectron configuration and adding new one
             remove_dataset("initial_set")
             register_coco_instances(

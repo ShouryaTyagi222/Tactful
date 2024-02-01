@@ -3,7 +3,7 @@ import sys
 sys.path.append("../")
 
 from src.helper import *
-from src.configs import *
+from trust.configs import *
 
 # evaluate the inital model and get worst performing classcfg.MODEL.WEIGHTS = cfg.OUTPUT_DIR + "/model_final.pth
 result_val=[]

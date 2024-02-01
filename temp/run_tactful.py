@@ -11,7 +11,7 @@ sys.path.append("../")
 
 from ..src.tactful_smi import TACTFUL_SMI
 from ..src.helper import *
-from ..src.configs import *
+from ..configs import *
 
 i=0
 try:
