@@ -43,7 +43,7 @@ cfg = get_cfg()
 # cfg.merge_from_file(model_zoo.get_config_file(model_cfg))
 cfg.merge_from_file(config_path)   #merge config file of the model
 cfg.DATASETS.TRAIN = ("initial_set",)
-cfg.DATASETS.TEST = ('test_set', 'val_set')
+cfg.DATASETS.TEST = ('val_set')
 cfg.DATALOADER.NUM_WORKERS = 4
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 15     # for the docvqa data
 cfg.SOLVER.BASE_LR = 0.00025
@@ -62,10 +62,7 @@ if torch.cuda.is_available():
 
 train_data_dirs = ("/content/drive/MyDrive/tactful/docvqa/train",
                    "/content/drive/MyDrive/tactful/docvqa/docvqa_train_coco.json")
-lake_data_dirs = ("/content/drive/MyDrive/tactful/docvqa/lake",
-                  "/content/drive/MyDrive/tactful/docvqa/docvqa_lake_coco.json")
-test_data_dirs = ("/content/drive/MyDrive/tactful/docvqa/test",
-                  "/content/drive/MyDrive/tactful/docvqa/docvqa_test_coco.json")
+lake_data_dirs = ("/content/drive/MyDrive/tactful/docvqa/lake")
 val_data_dirs = ("/content/drive/MyDrive/tactful/docvqa/val",
                  "/content/drive/MyDrive/tactful/docvqa/docvqa_val_coco.json")
 
@@ -77,7 +74,6 @@ remove_dataset("val_set")
 # Registering dataset intial_set for initial training, test_set and val_set for test and validation respectively.
 register_coco_instances(
     "initial_set", {}, train_data_dirs[1], train_data_dirs[0])
-register_coco_instances("test_set", {}, test_data_dirs[1], test_data_dirs[0])
 register_coco_instances("val_set", {}, val_data_dirs[1], val_data_dirs[0])
 
 iteration = args['iterations']

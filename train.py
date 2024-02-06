@@ -13,7 +13,6 @@ from configs import *
 def main(arg):
     logger = setup_logger(os.path.join(output_dir, cfg.TRAINING_NAME))
     result_val = []
-    result_test = []
     iteration = args['iterations']
     selection_strag = args['strategy']
     selection_budget = args['budget']
@@ -83,9 +82,8 @@ def main(arg):
             if (budget > 0):
 
                 # transferring images from lake set to train set
-                # aug_train_subset(
-                #     subset_result, train_data_dirs[1], lake_data_dirs[1], budget, lake_data_dirs, train_data_dirs)
-                aug_train_subset_2(subset_result, train_data_dirs[1], model, budget, lake_data_dirs, train_data_dirs)
+                aug_train_subset(subset_result, train_data_dirs[1], lake_data_dirs[1], budget, lake_data_dirs, train_data_dirs)
+                # aug_train_subset_2(subset_result, train_data_dirs[1], model, budget, lake_data_dirs, train_data_dirs)
             # removing the old training images from the detectron configuration and adding new one
             remove_dataset("initial_set")
             register_coco_instances(
@@ -108,7 +106,6 @@ def main(arg):
             model = create_model(cfg, "test")
             result = do_evaluate(cfg, model, output_dir)
             result_val.append(result['val_set'])
-            result_test.append(result['test_set'])
 
             # increasing the iteration number
             # publishing each iteration result to csv
@@ -124,15 +121,7 @@ def main(arg):
             csv = pd.DataFrame(final_data, columns=temp)
             csv.to_csv(os.path.join(output_dir, '{}'.format(
                 "val_scores"+selection_strag+".csv")))
-            final_data = []
-            for it in result_test:
-                print(it)
-                for k, val in it.items():
-                    temp = list(val.keys())
-                    final_data.append(list(val.values()))
-            csv = pd.DataFrame(final_data, columns=temp)
-            csv.to_csv(os.path.join(output_dir, '{}'.format(
-                "test_scores"+selection_strag+".csv")))
+            
     except Exception as e:
         logger.error("Error while training:", e)
 
@@ -147,15 +136,6 @@ def main(arg):
         csv = pd.DataFrame(final_data, columns=temp)
         csv.to_csv(os.path.join(output_dir, '{}'.format(
             "val_scores"+selection_strag+".csv")))
-        final_data = []
-        for i in result_test:
-            print(i)
-            for k, val in i.items():
-                temp = list(val.keys())
-                final_data.append(list(val.values()))
-        csv = pd.DataFrame(final_data, columns=temp)
-        csv.to_csv(os.path.join(output_dir, '{}'.format(
-            "test_scores"+selection_strag+".csv")))
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Tactful", formatter_class=argparse.ArgumentDefaultsHelpFormatter)

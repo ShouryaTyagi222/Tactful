@@ -99,7 +99,9 @@ def crop_images_classwise(model: DefaultPredictor, src_path, dest_path,
     if not os.path.exists(dest_path + '/obj_images'):
         os.makedirs(dest_path + '/obj_images')
     obj_im_dir = dest_path + '/obj_images'
+    MAPPING = {'0': 'Date Block', '1': 'Logos', '2': 'Subject Block', '3': 'Body Block', '4': 'Circular ID', '5': 'Table', '6': 'Stamps/Seals', '7': 'Handwritten Text', '8': 'Copy-Forwarded To Block', '9': 'Address of Issuing Authority', '10': 'Signature', '11': 'Reference Block', '12': 'Signature Block', '13': 'Header Block', '14': 'Addressed To Block'}
     no_of_objects = 0
+    print(src_path)
     for d in tqdm(os.listdir(src_path)):
         image = cv2.imread(os.path.join(src_path, d))
         height, width = image.shape[:2]
@@ -137,8 +139,7 @@ def crop_images_classwise(model: DefaultPredictor, src_path, dest_path,
                 crop_img.save(
                     os.path.join(
                         obj_im_dir, MAPPING[str(classes[idx])],
-                        os.path.split(os.path.join(src_path, d))[1].replace(
-                            ".jpg", "") + "_" + str(idx) + ".jpg"))
+                        d.replace(".png", "") + "_" + str(idx) + ".png"))
             except Exception as e:
                 print(e)
 
@@ -155,13 +156,14 @@ def crop_images_classwise_ground_truth(train_json_path, src_path, dest_path,
     obj_im_dir = dest_path + '/obj_images'
 
     # MAPPING = {"text": 1, "title": 2, "list": 3, "table": 4, "figure": 5}
-    MAPPING={vl:int(ky) for ky,vl in MAPPING.items()}
-    # MAPPING = {'Date Block': 0, 'Logos': 1, 'Subject Block': 2, 'Body Block': 3, 'Circular ID': 4, 'Table': 5, 'Stamps/Seals': 6, 'Handwritten Text': 7, 'Copy-Forwarded To Block': 8, 'Address of Issuing Authority': 9, 'Signature': 10, 'Reference Block': 11, 'Signature Block': 12, 'Header Block': 13, 'Addressed To Block': 14}
+    MAPPING = {'Date Block': 0, 'Logos': 1, 'Subject Block': 2, 'Body Block': 3, 'Circular ID': 4, 'Table': 5, 'Stamps/Seals': 6, 'Handwritten Text': 7, 'Copy-Forwarded To Block': 8, 'Address of Issuing Authority': 9, 'Signature': 10, 'Reference Block': 11, 'Signature Block': 12, 'Header Block': 13, 'Addressed To Block': 14}
     no_of_objects = 0
     with open(train_json_path) as f:
         data = json.load(f)
     annotations = data['annotations']
     file_names = os.listdir(src_path)
+    print(src_path)
+    print(file_names)
     file_ids = {
         x['id']: x['file_name']
         for x in data['images'] if x['file_name'] in file_names
@@ -185,8 +187,7 @@ def crop_images_classwise_ground_truth(train_json_path, src_path, dest_path,
             crop_img.save(
                 os.path.join(
                     obj_im_dir, category,
-                    os.path.split(os.path.join(src_path, d))[1].replace(
-                        ".jpg", "") + "_" + str(idx) + ".jpg"))
+                    d.replace(".png", "") + "_" + str(idx) + ".png"))
 
     print("Number of objects: " + str(no_of_objects))
 
@@ -200,7 +201,7 @@ def Random_wrapper(image_list, budget=10):
 
 def change_dir(image_results, src_dir, dest_dir):
     for image in image_results:
-        source_img = image
+        source_img = os.path.join(src_dir[0],image)
         destination_img = os.path.join(dest_dir[0], os.path.basename(image))
         if not os.path.exists(dest_dir[0]) or not os.path.exists(dest_dir[1]):
             os.mkdir(dest_dir[0])
@@ -226,7 +227,23 @@ def change_dir(image_results, src_dir, dest_dir):
         except:
             pass
 
+
 def create_labels_update(images, annotations, categories, filename):
+    # Assign unique IDs to annotations
+    annotation_id_counter = 1
+    image_id_counter=1
+    image_id_to_new_id = {}
+
+    for annotation in annotations:
+        annotation['id'] = annotation_id_counter
+        annotation_id_counter += 1
+
+    for image in images:
+        image_id_to_new_id[image['id']] = image['id']
+
+    for annotation in annotations:
+        annotation['image_id'] = image_id_to_new_id[annotation['image_id']]
+
     labels = {}
     labels['images'] = images
     labels['annotations'] = annotations
@@ -250,8 +267,8 @@ def create_dir(dir_name):
         pass
 
 def get_original_images_path(subset_result:list,img_dir:str):
-    return [os.path.join(img_dir,"_".join(os.path.basename(x).split("_")[:-1])) for x in subset_result]
-    
+    return ["_".join(os.path.basename(x).split("_")[:-1])+'.png' for x in subset_result]
+
 def aug_train_subset(subset_result, train_data_json, lake_data_json, budget, src_dir, dest_dir):
     with open(lake_data_json, mode="r") as f:
         lake_dataset = json.load(f)
@@ -266,9 +283,32 @@ def aug_train_subset(subset_result, train_data_json, lake_data_json, budget, src
     train_annotations = train_dataset['annotations'];
     train_image_list = train_dataset['images'];
 
+    # update new data such that the full dataset has unique ids
+    image_id_offset = max(image['id'] for image in train_image_list)
+    annotation_id_offset = max(annotation['id'] for annotation in train_annotations)
+    image_id_to_new_id = {}
+    # print('INITAL')
+    # print('IMAGE SHIFT: ',image_id_offset)
+    # print('ANNOTATION SHIFT :',annotation_id_offset)
+    # print('ANNOTATION LENGTH :',len(train_annotations))
+
+    for image in image_list:
+        image_id_to_new_id[image['id']] = image['id']+image_id_offset+1
+        image['id'] += image_id_offset+1
+
+    for annotation in annotations_shift:
+        annotation['image_id'] = image_id_to_new_id[annotation['image_id']]
+        annotation['id'] += annotation_id_offset + 1
+
     # appending the images to train images
     train_image_list += image_list;
     train_annotations += annotations_shift;
+    image_id_offset = max(image['id'] for image in train_image_list)
+    annotation_id_offset = max(annotation['id'] for annotation in train_annotations)
+    # print('FINAL')
+    # print('IMAGE SHIFT: ',image_id_offset)
+    # print('ANNOTATION SHIFT :',annotation_id_offset)
+    # print('ANNOTATION LENGTH :',len(train_annotations))
 
     #removing the images lake dataset.
     final_lake_image_list = list(filter(lambda x: x['file_name'] not in subset_result, lake_dataset['images']))
@@ -277,10 +317,12 @@ def aug_train_subset(subset_result, train_data_json, lake_data_json, budget, src
 
     #moving data from lake set to train set.
     change_dir(subset_result, src_dir, dest_dir)
+    print('\n TOTAL TRAIN JSON LEN :',len(train_image_list))
 
     #changing the coco-file for annotations
     create_labels_update(train_image_list, train_annotations, categories, train_data_json)
     create_labels_update(final_lake_image_list, final_lake_annotations, categories, lake_data_json)
+
 
 def get_area(bbox):
   x=int(bbox[2])-int(bbox[0])
@@ -342,12 +384,12 @@ def aug_train_subset_2(subset_result, train_data_json, model, budget, src_dir, d
         }
         for image_path in subset_result
     ]
-    print('trian_image_list',train_image_list)
+    print('train_image_list',train_image_list)
 
     # Get bounding box information using the model
     bounding_boxes = get_bounding_boxes(model, subset_result, image_id_mapping, annot_id)
     print('bounding_boxes :',bounding_boxes)
-    
+
     # Update train annotations with bounding box information
     train_annotations = train_dataset['annotations'] + bounding_boxes
 

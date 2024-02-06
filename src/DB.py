@@ -21,14 +21,15 @@ class Database(object):
     self.classes = set(self.data["cls"])
 
   def _gen_csv(self):
-    if os.path.exists(self.DB_csv):
-      return
+    print(self.DB_csv)
+    print(self.DB_dir)
     with open(self.DB_csv, 'w', encoding='UTF-8') as f:
       f.write("img,cls")
       for root, _, files in os.walk(self.DB_dir, topdown=False):
+        print(root,_,files)
         cls = root.split('/')[-1]
         for name in files:
-          if not name.endswith('.jpg'):
+          if not name.endswith('.png'):
             continue
           img = os.path.join(root, name)
           f.write("\n{},{}".format(img, cls))
