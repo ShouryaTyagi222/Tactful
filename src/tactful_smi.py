@@ -2,8 +2,8 @@ from .strategy import Strategy
 import numpy as np
 
 
-from trust.utils.DB import Database
-from trust.utils.resnet_feat import ResNetFeat
+from .DB import Database
+from .resnet_feat import ResNetFeat
 
 import torch
 from torch import nn
@@ -145,6 +145,7 @@ class TACTFUL_SMI(Strategy):
 
         lake_set_embeddings = f_model.make_samples(
                 db, cache_path="lake-" + str(iteration), RES_model="resnet101", pick_layer="avg")
+        
 
         query_embedding = []
 
@@ -203,7 +204,6 @@ class TACTFUL_SMI(Strategy):
                                                                     queryData=query_embedding,                                                                    
                                                                     magnificationEta=eta,
                                                                     lambdaVal=lambdaVal)
-        
         greedyList = obj.maximize(budget=budget,optimizer=optimizer, stopIfZeroGain=stopIfZeroGain, 
                               stopIfNegativeGain=stopIfNegativeGain, verbose=verbose)
         greedyIndices = [x[0] for x in greedyList]
