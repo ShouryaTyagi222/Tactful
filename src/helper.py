@@ -4,7 +4,6 @@ import numpy as np
 from tqdm import tqdm
 from PIL import Image
 import numpy as np
-from ..configs import *
 
 from detectron2.data import (
     DatasetCatalog,

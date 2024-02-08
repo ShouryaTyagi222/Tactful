@@ -37,6 +37,7 @@ def main(arg):
     i = 0
     try:
         while (i < iteration and budget > 0):
+            # step 3
             # get embeddings for initial and lakeset from RESNET101
 
             if (selection_strag != "random"):
@@ -50,7 +51,8 @@ def main(arg):
 
                 # Cropping object based on ground truth for the query set.
                 # The set is part of train set, so no need of using object detection model to find the bounding box.
-
+                print('>>>',query_path)
+                print('>>>',os.path.join(model_path,'query_images'))
                 crop_images_classwise_ground_truth(train_data_dirs[1], query_path, os.path.join(
                     model_path, "query_images"), args['category'])
 
@@ -59,20 +61,20 @@ def main(arg):
                     os.remove(os.path.join(model_path, "data.csv"))
                 except:
                     pass
-
-                cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR , "model_final.pth")
-                model = create_model(cfg, "test")
+                model = create_model(cfg,'test')
                 crop_images_classwise(
                     model, lake_data_dirs[0], os.path.join(model_path, "lake_images"), proposal_budget=proposal_budget)
 
                 selection_arg['iteration'] = i
                 strategy_sel = TACTFUL_SMI(args = selection_arg)
                 lake_image_list, subset_result = strategy_sel.select(proposal_budget)
+                print(subset_result)
                 subset_result = [lake_image_list[i] for i in subset_result]
                 subset_result = list(
-                    set(subset_result))
+                    set(get_original_images_path(subset_result,lake_data_dirs[0])))
 
             else:
+                model = create_model(cfg,'test')
                 lake_image_list = os.listdir(lake_data_dirs[0])
                 subset_result = Random_wrapper(
                     lake_image_list, selection_budget)
@@ -93,7 +95,7 @@ def main(arg):
             torch.cuda.empty_cache()
             # before starting the model active learning loop, calculating the embedding of the lake datset
             # change iteration as per the requirement
-            cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR,"model_final.pth")
+            cfg.MODEL.WEIGHTS = cfg.OUTPUT_DIR + "/model_final.pth"
             cfg.SOLVER.MAX_ITER = 500
             model = create_model(cfg, "train")
             model.train()
@@ -102,10 +104,11 @@ def main(arg):
             del model
             torch.cuda.empty_cache()
             # before starting the model active learning loop, calculating the embedding of the lake datset
-            cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR,"model_final.pth")
+            cfg.MODEL.WEIGHTS = cfg.OUTPUT_DIR + "/model_final.pth"
             model = create_model(cfg, "test")
             result = do_evaluate(cfg, model, output_dir)
             result_val.append(result['val_set'])
+            # result_test.append(result['test_set'])
 
             # increasing the iteration number
             # publishing each iteration result to csv
@@ -121,6 +124,15 @@ def main(arg):
             csv = pd.DataFrame(final_data, columns=temp)
             csv.to_csv(os.path.join(output_dir, '{}'.format(
                 "val_scores"+selection_strag+".csv")))
+            # final_data = []
+            # for it in result_test:
+            #     print(it)
+            #     for k, val in it.items():
+            #         temp = list(val.keys())
+            #         final_data.append(list(val.values()))
+            # csv = pd.DataFrame(final_data, columns=temp)
+            # csv.to_csv(os.path.join(output_dir, '{}'.format(
+            #     "test_scores"+selection_strag+".csv")))
             
     except Exception as e:
         logger.error("Error while training:", e)
