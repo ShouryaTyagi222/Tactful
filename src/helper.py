@@ -98,7 +98,7 @@ def crop_images_classwise(model: DefaultPredictor, src_path, dest_path,
     if not os.path.exists(dest_path + '/obj_images'):
         os.makedirs(dest_path + '/obj_images')
     obj_im_dir = dest_path + '/obj_images'
-    MAPPING = {'0': 'Date Block', '1': 'Logos', '2': 'Subject Block', '3': 'Body Block', '4': 'Circular ID', '5': 'Table', '6': 'Stamps/Seals', '7': 'Handwritten Text', '8': 'Copy-Forwarded To Block', '9': 'Address of Issuing Authority', '10': 'Signature', '11': 'Reference Block', '12': 'Signature Block', '13': 'Header Block', '14': 'Addressed To Block'}
+    MAPPING = {'0': 'Date Block', '1': 'Logos', '2': 'Subject Block', '3': 'Body Block', '4': 'Circular ID', '5': 'Table', '6': 'Stamps-Seals', '7': 'Handwritten Text', '8': 'Copy-Forwarded To Block', '9': 'Address of Issuing Authority', '10': 'Signature', '11': 'Reference Block', '12': 'Signature Block', '13': 'Header Block', '14': 'Addressed To Block'}
     no_of_objects = 0
     print(src_path)
     for d in tqdm(os.listdir(src_path)):
@@ -155,7 +155,7 @@ def crop_images_classwise_ground_truth(train_json_path, src_path, dest_path,
     obj_im_dir = dest_path + '/obj_images'
 
     # MAPPING = {"text": 1, "title": 2, "list": 3, "table": 4, "figure": 5}
-    MAPPING = {'Date Block': 0, 'Logos': 1, 'Subject Block': 2, 'Body Block': 3, 'Circular ID': 4, 'Table': 5, 'Stamps/Seals': 6, 'Handwritten Text': 7, 'Copy-Forwarded To Block': 8, 'Address of Issuing Authority': 9, 'Signature': 10, 'Reference Block': 11, 'Signature Block': 12, 'Header Block': 13, 'Addressed To Block': 14}
+    MAPPING = {'Date Block': 0, 'Logos': 1, 'Subject Block': 2, 'Body Block': 3, 'Circular ID': 4, 'Table': 5, 'Stamps-Seals': 6, 'Handwritten Text': 7, 'Copy-Forwarded To Block': 8, 'Address of Issuing Authority': 9, 'Signature': 10, 'Reference Block': 11, 'Signature Block': 12, 'Header Block': 13, 'Addressed To Block': 14}
     no_of_objects = 0
     with open(train_json_path) as f:
         data = json.load(f)
@@ -265,8 +265,10 @@ def create_dir(dir_name):
     except:
         pass
 
+
 def get_original_images_path(subset_result:list,img_dir:str):
     return ["_".join(os.path.basename(x).split("_")[:-1])+'.png' for x in subset_result]
+
 
 def aug_train_subset(subset_result, train_data_json, lake_data_json, budget, src_dir, dest_dir):
     with open(lake_data_json, mode="r") as f:
@@ -286,10 +288,10 @@ def aug_train_subset(subset_result, train_data_json, lake_data_json, budget, src
     image_id_offset = max(image['id'] for image in train_image_list)
     annotation_id_offset = max(annotation['id'] for annotation in train_annotations)
     image_id_to_new_id = {}
-    # print('INITAL')
-    # print('IMAGE SHIFT: ',image_id_offset)
-    # print('ANNOTATION SHIFT :',annotation_id_offset)
-    # print('ANNOTATION LENGTH :',len(train_annotations))
+    print('INITAL')
+    print('IMAGE SHIFT: ',image_id_offset)
+    print('ANNOTATION SHIFT :',annotation_id_offset)
+    print('ANNOTATION LENGTH :',len(train_annotations))
 
     for image in image_list:
         image_id_to_new_id[image['id']] = image['id']+image_id_offset+1
@@ -304,10 +306,10 @@ def aug_train_subset(subset_result, train_data_json, lake_data_json, budget, src
     train_annotations += annotations_shift;
     image_id_offset = max(image['id'] for image in train_image_list)
     annotation_id_offset = max(annotation['id'] for annotation in train_annotations)
-    # print('FINAL')
-    # print('IMAGE SHIFT: ',image_id_offset)
-    # print('ANNOTATION SHIFT :',annotation_id_offset)
-    # print('ANNOTATION LENGTH :',len(train_annotations))
+    print('FINAL')
+    print('IMAGE SHIFT: ',image_id_offset)
+    print('ANNOTATION SHIFT :',annotation_id_offset)
+    print('ANNOTATION LENGTH :',len(train_annotations))
 
     #removing the images lake dataset.
     final_lake_image_list = list(filter(lambda x: x['file_name'] not in subset_result, lake_dataset['images']))
@@ -383,7 +385,7 @@ def aug_train_subset_2(subset_result, train_data_json, model, budget, src_dir, d
         }
         for image_path in subset_result
     ]
-    print('train_image_list',train_image_list)
+    print('trian_image_list',train_image_list)
 
     # Get bounding box information using the model
     bounding_boxes = get_bounding_boxes(model, subset_result, image_id_mapping, annot_id)

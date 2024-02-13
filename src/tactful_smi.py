@@ -194,7 +194,6 @@ class TACTFUL_SMI(Strategy):
                                                                       num_queries=query_embedding.shape[0],
                                                                       data=lake_embedding,
                                                                       queryData=query_embedding, 
-                                                                      queryDiversityEta=eta, 
                                                                       metric=metric)
         if(self.args['smi_function']=='logdetmi'):
             lambdaVal = self.args['lambdaVal'] if 'lambdaVal' in self.args else 1

@@ -27,3 +27,21 @@ python train.py -i -m <INITIAL_MODEL_PATH>
 ```
 python infer.py -i <INPUT_IMG_PATH> 
 ```
+
+Note :
+- the data is in Data folder
+- to prepare data for training run coco_converter.py
+- The outputs are saved in faster_rcnn_output.
+- The val scores are in faster_rcnn_output/<strategy>/initial_training/val_scores.csv
+- the Logs of the training are saved in faster_rcnn_output/<strategy>/initial_training/<strategy>log.txt
+- Prepare the data using coco_converter.py before training everytime because of active learning the images are transfered from lake set to train set.
+
+
+## Detectron2 Installation
+
+- conda install pytorch==1.10.0 torchvision==0.11.1 torchaudio==0.10.0 cudatoolkit=11.0 -c pytorch
+- conda install cython
+- git clone https://github.com/facebookresearch/detectron2.git
+- cd detectron2
+- pip install -e .
+- conda install pytorch torchvision torchaudio cudatoolkit=11.5 -c pytorch

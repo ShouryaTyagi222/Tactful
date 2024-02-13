@@ -1,4 +1,5 @@
 # pip install sahi
+# python coco_converter.py -i '/data/circulars/DATA/Models/CircularsV1/docvqa.json' -d '/data/circulars/DATA/split_circulars/SplitCircularsv2/first_page' -o '/data/circulars/DATA/TACTFUL/Data/docvqa'
 from sahi.utils.coco import Coco, CocoCategory, CocoImage, CocoAnnotation
 from sahi.utils.file import save_json
 import random
@@ -13,29 +14,29 @@ def main(args):
     data_file=args.data_file
     img_dir=args.img_dir
     output_dir=args.output_dir
-    train_split=int(args.train_split)
+    train_split=float(args.train_split)
 
 
     with open(data_file, 'r') as f:
         data = json.load(f)
 
     train_coco = Coco()
-    test_coco = Coco()
+    lake_coco = Coco()
     val_coco = Coco()
-    map = {'Date Block': 0, 'Logos': 1, 'Subject Block': 2, 'Body Block': 3, 'Circular ID': 4, 'Table': 5, 'Stamps/Seals': 6, 'Handwritten Text': 7, 'Copy-Forwarded To Block': 8, 'Address of Issuing Authority': 9, 'Signature': 10, 'Reference Block': 11, 'Signature Block': 12, 'Header Block': 13, 'Addressed To Block': 14}
+    map = {'Date Block': 0, 'Logos': 1, 'Subject Block': 2, 'Body Block': 3, 'Circular ID': 4, 'Table': 5, 'Stamps-Seals': 6, 'Handwritten Text': 7, 'Copy-Forwarded To Block': 8, 'Address of Issuing Authority': 9, 'Signature': 10, 'Reference Block': 11, 'Signature Block': 12, 'Header Block': 13, 'Addressed To Block': 14}
     for k,v in map.items():
         train_coco.add_category(CocoCategory(id=v, name=k))
-        test_coco.add_category(CocoCategory(id=v, name=k))
+        lake_coco.add_category(CocoCategory(id=v, name=k))
         val_coco.add_category(CocoCategory(id=v, name=k))
 
     labels=set()
     q_labels=set()
     files=[]
     tr=0
-    te=0
+    la=0
     va=0
 
-    for folder in ['train','test','val']:
+    for folder in ['train','lake','val']:
         if not os.path.exists(os.path.join(output_dir,folder)):
             os.mkdir(os.path.join(output_dir,folder))
 
@@ -70,26 +71,26 @@ def main(args):
                 q_labels.add(q_label)
 
         split = random.randint(0, 2)
-        
-        if te<=41 and split==1:
-            test_coco.add_image(coco_image)
-            cv2.imwrite(os.path.join(output_dir,'test',img_name),img)
-            te+=1
-        elif va<=41 and split==2:
+       
+        if va<=79 and split==2:
             val_coco.add_image(coco_image)
             cv2.imwrite(os.path.join(output_dir,'val',img_name),img)
             va+=1
-        elif tr<=train_split and split==0:
+        elif tr<=45 and split==0:
             train_coco.add_image(coco_image)
             cv2.imwrite(os.path.join(output_dir,'train',img_name),img)
             tr+=1
+        else:
+            lake_coco.add_image(coco_image)
+            cv2.imwrite(os.path.join(output_dir,'lake',img_name),img)
+            la+=1
 
         print(img_name)
-        print([tr,te,va])
-        print([len(os.listdir(output_dir+'/train')),len(os.listdir(output_dir+'/test')),len(os.listdir(output_dir+'/val'))])
+        print([tr,va,la])
+        print([len(os.listdir(output_dir+'/train')),len(os.listdir(output_dir+'/val')),len(os.listdir(output_dir+'/lake'))])
 
     save_json(data=train_coco.json, save_path=output_dir+'/docvqa_train_coco.json')
-    save_json(data=test_coco.json, save_path=output_dir+'/docvqa_test_coco.json')
+    save_json(data=lake_coco.json, save_path=output_dir+'/docvqa_lake_coco.json')
     save_json(data=val_coco.json, save_path=output_dir+'/docvqa_val_coco.json')
 
 def parse_args():
@@ -98,7 +99,6 @@ def parse_args():
     parser.add_argument("-i", "--data_file", default=None, type=str, help="Path to the input json file")
     parser.add_argument("-d", "--img_dir", default=None, type=str, help="Path to the image Directory")
     parser.add_argument("-o", "--output_dir", default='/', type=str, help="Path to the Output Folder")
-    parser.add_argument("-s", "--train_split", default='0.7', type=str, help="Train Val Split [0-1]")
     args = parser.parse_args()
     return args
 

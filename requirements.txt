@@ -1,8 +1,10 @@
+pandas
+torch
+torchvision
+cython
+imageio
+multipledispatch==0.6.0
 git+https://github.com/facebookresearch/detectron2.git
 git+https://github.com/decile-team/submodlib.git
 tensorflow==2.9.1
 opencv-python
-pandas
-torch
-torchvision
-multipledispatch==0.6.0
