@@ -4,28 +4,35 @@ from detectron2.data.datasets import register_coco_instances
 import os
 import torch
 
-from src.helper import *
+from detectron2.data import (
+    DatasetCatalog,
+    MetadataCatalog,
+    build_detection_test_loader,
+)
+
+# from src.helper import *
 
 # basic args for tactful 
 args = {
     "strategy":'random',      # strategy to be used for tactful
     "total_budget":150,  # Total data points available
-    "budget":30,  # Budget per iteration
-    "lake_size":150,  # Size of the lake dataset
-    "train_size":46,  # Size of the training dataset
+    "budget":50,  # Budget per iteration
+    "lake_size":1000,  # Size of the lake dataset
+    "train_size":100,  # Size of the training dataset
     "category":'Reference Block',   # Target Class     Note : use Stamps-Seals instead of Stamps/Seals due to path issues
-    "device":1,
-    "proposal_budget":30,  # Budget for proposal generation
-    "iterations":5
+    "device":0,
+    "proposal_budget":50,  # Budget for proposal generation
+    "iterations":1
 }
 args["output_path"] = args['strategy']
 
 # mapping required for inference
-MAPPING = {'0': 'Date Block', '1': 'Logos', '2': 'Subject Block', '3': 'Body Block', '4': 'Circular ID', '5': 'Table', '6': 'Stamps-Seals', '7': 'Handwritten Text', '8': 'Copy-Forwarded To Block', '9': 'Address of Issuing Authority', '10': 'Signature', '11': 'Reference Block', '12': 'Signature Block', '13': 'Header Block', '14': 'Addressed To Block'}
+MAPPING = {'Address of Issuing Authority': 0, 'Date Block': 1, 'Header Block': 2, 'Table': 3, 'Circular ID': 4, 'Body Block': 5, 'Signature': 6, 'Signature Block': 7, 'Stamps-Seals': 8, 'Handwritten Text': 9, 'Copy-Forwarded To Block': 10, 'Addressed To Block': 11, 'Subject Block': 12, 'Logos': 13, 'Reference Block': 14, 'Adressed To': 15, 'Circular Reference': 16, 'Name of the signatory': 17, 'Signatory-Designation': 18, 'Reference Id': 19, 'Forwarder': 20, 'Forwarder-Designation': 21, 'Issuing Authority': 22}
+R_MAPPING = {value:key for key,value in MAPPING.items()}
 
 train_path = '/data/circulars/DATA/TACTFUL/faster_rcnn_output'    # path of the output dir
 
-data_dir = '/data/circulars/DATA/TACTFUL/Data/random' # path to the data
+data_dir = '/data/circulars/DATA/TACTFUL/Data/new_faster_rcnn' # path to the data
 
 train_data_dirs = (os.path.join(data_dir,"train"),
                    os.path.join(data_dir,"docvqa_train_coco.json"))
@@ -39,9 +46,15 @@ query_path = '/data/circulars/DATA/TACTFUL/Data/query_imgs'
 
 # train a faster_rcnn model on the initial_set, add respective config file path
 config_path = '/data/circulars/DATA/TACTFUL/Data/faster_rcnn_pub_config.yml'
+INITIAL_MODEL_PATH = '/data/circulars/DATA/TACTFUL/Data/model_final.pth'
 
 training_name = args['output_path']
 model_path = os.path.join(train_path, training_name)
+def create_dir(dir_name):
+    try:
+        os.mkdir(dir_name)
+    except:
+        pass
 if (not os.path.exists(model_path)):
     create_dir(model_path)
 output_dir = os.path.join(model_path, "initial_training")
@@ -57,7 +70,7 @@ cfg.merge_from_file(config_path)   #merge config file of the model
 cfg.DATASETS.TRAIN = ("initial_set",)
 cfg.DATASETS.TEST = ('val_set',)
 cfg.DATALOADER.NUM_WORKERS = 4
-cfg.MODEL.ROI_HEADS.NUM_CLASSES = 15     # for the docvqa data
+cfg.MODEL.ROI_HEADS.NUM_CLASSES = len(MAPPING)     # for the docvqa data
 cfg.SOLVER.BASE_LR = 0.00025
 cfg.SOLVER.WARMUP_ITERS = 1000
 cfg.SOLVER.MAX_ITER = 500
@@ -73,6 +86,12 @@ if torch.cuda.is_available():
     torch.cuda.set_device(args['device'])
 
 #clearing data if already exist
+def remove_dataset(name):
+    if name in DatasetCatalog.list():
+        DatasetCatalog.remove(name)
+        MetadataCatalog.remove(name)
+
+
 remove_dataset("initial_set")
 remove_dataset("val_set")
 

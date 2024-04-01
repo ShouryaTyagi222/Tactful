@@ -12,7 +12,7 @@ from src.helper import *
 from configs import *
 
 print('RUNNING')
-def main(arg):
+def main():
     logger = setup_logger(os.path.join(output_dir, cfg.TRAINING_NAME))
     result_val = []
     iteration = args['iterations']
@@ -25,10 +25,10 @@ def main(arg):
     print('STRATEGY :', selection_strag)
 
     # Initial Training
-    if arg.initial_train:
+    if not os.path.exists(os.path.join(cfg.OUTPUT_DIR , "model_final.pth")):
         logger.info("Starting Initial_set Training")
         try:
-            cfg.MODEL.WEIGHTS = arg.init_model_path
+            cfg.MODEL.WEIGHTS = INITIAL_MODEL_PATH
             model = create_model(cfg)
             torch.cuda.empty_cache()
             model.train()
@@ -162,16 +162,5 @@ def main(arg):
     # csv.to_csv(os.path.join(output_dir, '{}'.format(
     #     "test_scores"+selection_strag+".csv")))
 
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="Tactful", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-    parser.add_argument("-i", "--initial_train", action='store_true', help="To Initialize the model")
-    parser.add_argument("-m", "--init_model_path", default=None, type=str, help="Path to the initial model path only initialize when training for the first time")
-    args = parser.parse_args()
-    return args
-
-
 if __name__ == "__main__":
-    arg = parse_args()
-    main(arg)
+    main()
